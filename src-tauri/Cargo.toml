@@ -1,0 +1,35 @@
+[package]
+name = "vrchat-group-manager"
+version = "0.2.0"
+description = "VRChat グループの可視状態を一括管理するツール"
+authors = ["takadayoo_1203"]
+license = "MIT"
+repository = "https://github.com/your-username/vrchat-group-manager"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json"] }
+log = "0.4"
+tokio = { version = "1", features = ["sync"] }
+thiserror = "2.0"
+keyring = { version = "3", features = ["apple-native", "windows-native"] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
