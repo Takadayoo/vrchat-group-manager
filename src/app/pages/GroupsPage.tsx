@@ -45,7 +45,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
   // 更新状態
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [updateResults, setUpdateResults] = useState<UpdateResult[]>([]);
+  // const [updateResults, setUpdateResults] = useState<UpdateResult[]>([]);
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
 
   // グループデータを取得
@@ -106,7 +106,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
 
     setIsUpdating(true);
     setUpdateError(null);
-    setUpdateResults([]);
+    // setUpdateResults([]);
     setProgress({ done: 0, total: selectedGroups.size });
 
     // 差分判定
@@ -127,13 +127,13 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
 
     // スキップ分を即時成功扱い
     if (skippedGroupIds.length > 0) {
-      setUpdateResults((prev) => [
-        ...prev,
-        ...skippedGroupIds.map<UpdateResult>((groupId) => ({
-          groupId,
-          success: true,
-        })),
-      ]);
+      // setUpdateResults((prev) => [
+      //   ...prev,
+      //   ...skippedGroupIds.map<UpdateResult>((groupId) => ({
+      //     groupId,
+      //     success: true,
+      //   })),
+      // ]);
       setProgress((p) => (p ? { ...p, done: p.done + skippedGroupIds.length } : p));
     }
 
@@ -155,7 +155,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
       });
 
       const results = await limitedParallel(tasks, MAX_CONCURRENCY);
-      setUpdateResults((prev) => [...prev, ...results]);
+      // setUpdateResults((prev) => [...prev, ...results]);
 
       const hasRateLimit = results.some((r) => !r.success && r.reason === "RATE_LIMIT");
 
@@ -201,10 +201,10 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     group.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const failed = updateResults.filter(
-    (r): r is Extract<UpdateResult, { success: false }> => !r.success,
-  );
-  const successCount = updateResults.filter((r) => r.success).length;
+  // const failed = updateResults.filter(
+  //   (r): r is Extract<UpdateResult, { success: false }> => !r.success,
+  // );
+  // const successCount = updateResults.filter((r) => r.success).length;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-50">
