@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "VRChat Group Manager",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "identifier": "com.takadayoo.vrchat-group-manager",
   "build": {
     "frontendDist": "../dist",
@@ -47,6 +47,13 @@
   "plugins": {
     "shell": {
       "open": true
+    },
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhGQTM5NjBGREQ1QkE0NEYKUldSUHBGdmRENWFqai9QSXc2OS9uNE9Nd3VCSmt5RE45S3R4Y3A0ejl3V0VyaklQZ2NGbnFRMlkK",
+      "endpoints": [
+        "https://github.com/Takadayoo/vrchat-group-manager/releases/latest/download/latest.json"
+      ]
     }
   }
 }

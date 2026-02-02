@@ -1,6 +1,6 @@
 [package]
 name = "vrchat-group-manager"
-version = "0.2.0"
+version = "0.2.1"
 description = "VRChat グループの可視状態を一括管理するツール"
 authors = ["takadayoo_1203"]
 license = "MIT"
@@ -26,6 +26,7 @@ log = "0.4"
 tokio = { version = "1", features = ["sync"] }
 thiserror = "2.0"
 keyring = { version = "3", features = ["apple-native", "windows-native"] }
+tauri-plugin-updater = "2.9.0"
 
 [profile.release]
 panic = "abort"

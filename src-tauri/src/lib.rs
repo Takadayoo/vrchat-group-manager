@@ -40,6 +40,7 @@ pub struct LoginResponse {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -84,7 +85,10 @@ async fn login_with_token(token: String) -> std::result::Result<LoginResponse, S
 
 /// グループ一覧取得
 #[tauri::command]
-async fn get_my_groups(token: String, user_id: String) -> std::result::Result<Vec<GroupResponse>, String> {
+async fn get_my_groups(
+    token: String,
+    user_id: String,
+) -> std::result::Result<Vec<GroupResponse>, String> {
     let groups = vrc_api::get_my_groups(&token, &user_id).await?;
 
     Ok(groups.into_iter().map(group_to_response).collect())
