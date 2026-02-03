@@ -17,6 +17,8 @@ import {
 import { Separator } from "@/app/components/ui/separator";
 import { Switch } from "@/app/components/ui/switch";
 import type { AppSettings, UserInfo } from "@/types";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check } from "@tauri-apps/plugin-updater";
 import { Activity, Bell, Code, FileText, Info, LogOut, Palette, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,7 +29,7 @@ interface SettingsPageProps {
   onLogout: () => void;
 }
 
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.2.3";
 const DEVELOPER_NAME = "takadayoo_1203";
 
 export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
@@ -82,19 +84,41 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
   const handleCheckUpdate = async () => {
     setIsCheckingUpdate(true);
     try {
-      // TODO: Tauriのinvokeコマンドでアップデート確認
-      // const response = await invoke<TauriResponse<{ hasUpdate: boolean; version?: string }>>('check_for_updates');
-      // if (response.success && response.data) {
-      //   if (response.data.hasUpdate) {
-      //     toast.success(`新しいバージョン ${response.data.version} が利用可能です`);
-      //   } else {
-      //     toast.info('最新バージョンを使用しています');
-      //   }
-      // }
+      const update = await check();
 
-      // モック
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.info("最新バージョンを使用しています");
+      if (update) {
+        toast.success(`新しいバージョン ${update.version} が利用可能です`, {
+          description: update.body || "アップデート内容をご確認ください",
+          duration: 15000,
+          action: {
+            label: "今すぐ更新",
+            onClick: async () => {
+              try {
+                toast.info("アップデートをダウンロード中...");
+
+                await update.downloadAndInstall();
+
+                toast.success("アップデート完了！アプリを再起動します");
+
+                setTimeout(async () => {
+                  await relaunch();
+                }, 1000);
+              } catch (error) {
+                console.error("Update installation error:", error);
+                toast.error("アップデートのインストールに失敗しました");
+              }
+            },
+          },
+          cancel: {
+            label: "後で",
+            onClick: () => {
+              toast.dismiss();
+            },
+          },
+        });
+      } else {
+        toast.info("最新バージョンを使用しています");
+      }
     } catch (error) {
       console.error("Update check error:", error);
       toast.error("アップデート確認中にエラーが発生しました");
@@ -343,12 +367,7 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
         </Card>
 
         {/* アプリの動作 */}
-        <Card className="relative opacity-60 pointer-events-none">
-          <div className="absolute top-4 right-4 z-10">
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-              近日実装予定
-            </Badge>
-          </div>
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="size-5" />

@@ -26,6 +26,9 @@ dist-ssr
 # 追加: Tauri関連
 src-tauri/target
 src-tauri/gen
+secret.key
+secret.key.pub
+.tauri
 
 # 追加: OS固有
 Thumbs.db

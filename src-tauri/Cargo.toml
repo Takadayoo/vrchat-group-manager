@@ -1,10 +1,10 @@
 [package]
 name = "vrchat-group-manager"
-version = "0.2.1"
-description = "VRChat グループの可視状態を一括管理するツール"
-authors = ["takadayoo_1203"]
+version = "0.2.3"
+description = "VRChat グループを一括管理するツール"
+authors = ["Takadayoo"]
 license = "MIT"
-repository = "https://github.com/your-username/vrchat-group-manager"
+repository = "https://github.com/Takadayoo/vrchat-group-manager"
 edition = "2021"
 rust-version = "1.77.2"
 

@@ -52,7 +52,7 @@ pub struct VRCGroup {
     pub created_at: Option<String>,
 }
 
-const USER_AGENT_STR: &str = "VRC Group Manager/0.2.0 discord:takadayoo_1203";
+const USER_AGENT_STR: &str = "VRC Group Manager/0.2.3 discord:takadayoo_1203";
 const BASE_URL: &str = "https://api.vrchat.cloud/api/1";
 
 /// HTTPクライアントを作成

@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use tauri::AppHandle;
+use tauri_plugin_updater::UpdaterExt;
 
 mod error;
 mod token_store;
@@ -59,6 +61,7 @@ pub fn run() {
             save_token,
             load_token,
             delete_token,
+            check_for_updates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -107,6 +110,15 @@ async fn update_group_status(
     vrc_api::update_group_visibility(&token, &user.id, &group_id, vis).await?;
 
     Ok(())
+}
+
+#[tauri::command]
+async fn check_for_updates(app: AppHandle) -> Result<bool, String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+
+    let update = updater.check().await.map_err(|e| e.to_string())?;
+
+    Ok(update.is_some())
 }
 
 /// トークンを保存
