@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 質問・サポート
+    url: https://github.com/Takadayoo/vrchat-group-manager/discussions
+    about: 使い方の質問はDiscussionsへ

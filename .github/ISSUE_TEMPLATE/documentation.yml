@@ -1,0 +1,37 @@
+name: ドキュメント改善
+description: READMEやドキュメントの改善提案
+title: "[Docs] "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ドキュメント改善のためのテンプレートです。
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: ドキュメントの種類
+      options:
+        - README
+        - CONTRIBUTING
+        - API仕様書
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-issue
+    attributes:
+      label: 現在の問題点
+      description: ドキュメントのどこが分かりにくいですか？
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: 改善案
+      description: どのように改善すべきですか？
+    validations:
+      required: false

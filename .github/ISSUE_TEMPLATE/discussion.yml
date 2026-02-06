@@ -1,0 +1,38 @@
+name: 議論・提案
+description: 設計や方針について議論したい
+title: "[Discussion] "
+labels: ["discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        設計や実装方針について議論するためのテンプレートです。
+
+  - type: textarea
+    id: topic
+    attributes:
+      label: 議論したいトピック
+      description: 何について議論したいですか？
+      placeholder: 例：グループ整理機能をどう実装するか
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景・経緯
+      description: なぜこの議論が必要ですか？
+    validations:
+      required: false
+
+  - type: textarea
+    id: options
+    attributes:
+      label: 考えている選択肢
+      description: 検討している案があれば教えてください
+      placeholder: |
+        案1：タグ機能
+        案2：カテゴリ分類
+        案3：検索機能
+    validations:
+      required: false
