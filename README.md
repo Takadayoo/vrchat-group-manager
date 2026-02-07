@@ -97,6 +97,23 @@ cargo tauri build
 - VRChatの仕様変更により、突然動作しなくなる場合があります
 - 利用は自己責任でお願いします
 
+## 貢献方法
+
+このプロジェクトへの貢献を歓迎します！
+
+バグ報告、機能提案、プルリクエストなど、どんな形でも貢献いただけます。
+
+詳細な貢献方法については、[CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
+
+### クイックスタート
+
+1. [Issues](https://github.com/Takadayoo/vrchat-group-manager/issues) で作業するIssueを選択
+2. フィーチャーブランチを作成
+3. 開発・テスト
+4. プルリクエストを作成
+
+外部の方は [CONTRIBUTING.md](CONTRIBUTING.md) のフォーク手順をご覧ください。
+
 ## ライセンス
 
 MIT
