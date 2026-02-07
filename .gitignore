@@ -35,3 +35,9 @@ Thumbs.db
 
 # Windows
 *.lnk
+
+# Claude Code
+.claude/
+
+# vscode
+.vscode/
