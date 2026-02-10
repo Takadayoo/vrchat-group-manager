@@ -75,6 +75,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
   // 初回ロード
   useEffect(() => {
     loadGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 全選択/解除
