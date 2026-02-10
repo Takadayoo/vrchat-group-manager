@@ -18,7 +18,7 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - run: rm package-lock.json && npm install
+      - run: rm -rf package-lock.json node_modules && npm install
 
       - name: Lint
         run: npm run lint
