@@ -50,6 +50,8 @@ pub struct VRCGroup {
     pub member_count: Option<i32>,
     #[serde(rename = "createdAt")]
     pub created_at: Option<String>,
+    #[serde(rename = "isRepresenting")]
+    pub is_representing: Option<bool>,
 }
 
 const USER_AGENT_STR: &str = "VRC Group Manager/0.2.3 discord:takadayoo_1203";
@@ -160,6 +162,47 @@ pub async fn update_group_visibility(
     let url = format!("{}/groups/{}/members/{}", BASE_URL, group_id, user_id);
 
     let body = serde_json::json!({ "visibility": visibility.to_string() });
+
+    let response = client.put(&url).json(&body).send().await?;
+    let status = response.status().as_u16();
+
+    if !response.status().is_success() {
+        return Err(create_http_error(status));
+    }
+
+    Ok(())
+}
+
+/// 掲示中のグループを取得する
+pub async fn get_represented_group(token: &str, user_id: &str) -> Result<Vec<VRCGroup>> {
+    let client = create_http_client(token)?;
+    let url = format!("{}/users/{}/groups/represented", BASE_URL, user_id);
+
+    let response = client.get(&url).send().await?;
+    let status = response.status().as_u16();
+
+    if !response.status().is_success() {
+        return Err(create_http_error(status));
+    }
+
+    let groups = response
+        .json::<Vec<VRCGroup>>()
+        .await
+        .map_err(|e| AppError::Json(format!("Failed to decode groups data: {}", e)))?;
+
+    Ok(groups)
+}
+
+/// 指定したグループを掲示する(掲示中の場合を掲示停止する)
+pub async fn update_group_representation(
+    token: &str,
+    group_id: &str,
+    is_representing: &bool,
+) -> Result<()> {
+    let client = create_http_client(token)?;
+    let url = format!("{}/groups/{}/representation", BASE_URL, group_id);
+
+    let body = serde_json::json!({ "isRepresenting": is_representing });
 
     let response = client.put(&url).json(&body).send().await?;
     let status = response.status().as_u16();
