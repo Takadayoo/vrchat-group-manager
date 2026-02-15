@@ -57,4 +57,22 @@ export const vrcApi = {
       visibility,
     });
   },
+
+  /**
+   * 掲示中のグループを取得する
+   */
+  async getRepresentedGroup(): Promise<VRChatGroup[]> {
+    const response = await invoke<VRChatGroup[]>("get_represented_group", {});
+    return response;
+  },
+
+  /**
+   * 指定したグループを掲示する(掲示中の場合を掲示停止する)
+   */
+  async updateGroupRepresentation(groupId: string, isRepresenting: boolean): Promise<void> {
+    await invoke("update_group_representation", {
+      groupId,
+      isRepresenting,
+    });
+  },
 };

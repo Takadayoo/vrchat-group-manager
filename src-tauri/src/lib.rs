@@ -30,6 +30,8 @@ pub struct GroupResponse {
     pub member_count: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_representing: Option<bool>,
 }
 
 /// ログインレスポンス
@@ -62,6 +64,8 @@ pub fn run() {
             load_token,
             delete_token,
             check_for_updates,
+            get_represented_group,
+            update_group_representation,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -155,5 +159,29 @@ fn group_to_response(group: vrc_api::VRCGroup) -> GroupResponse {
         icon_url: group.icon_url,
         member_count: group.member_count,
         created_at: group.created_at,
+        is_representing: group.is_representing,
     }
+}
+
+/// 掲示中のグループを取得する
+#[tauri::command]
+async fn get_represented_group() -> std::result::Result<Vec<GroupResponse>, String> {
+    let token = token_store::load_token()?.ok_or("Token not found")?;
+    let user = vrc_api::get_my_user(&token).await?;
+    let groups = vrc_api::get_represented_group(&token, &user.id).await?;
+
+    Ok(groups.into_iter().map(group_to_response).collect())
+}
+
+/// 指定したグループを掲示する(掲示中の場合を掲示停止する)
+#[tauri::command]
+async fn update_group_representation(
+    group_id: String,
+    is_representing: bool,
+) -> std::result::Result<(), String> {
+    let token = token_store::load_token()?.ok_or("Token not found")?;
+
+    vrc_api::update_group_representation(&token, &group_id, &is_representing).await?;
+
+    Ok(())
 }
