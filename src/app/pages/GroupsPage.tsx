@@ -41,12 +41,11 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
   });
   const [targetVisibility, setTargetVisibility] = useState<GroupVisibility>("visible");
   const [isLoading, setIsLoading] = useState(false);
-
-  // 更新状態
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
-  // const [updateResults, setUpdateResults] = useState<UpdateResult[]>([]);
   const [progress, setProgress] = useState<UpdateProgress | null>(null);
+  const [isRepresentMode, setIsRepresentMode] = useState(false);
+  const [isRepresenting, setIsRepresenting] = useState(false);
 
   // グループデータを取得
   const loadGroups = useCallback(async () => {
@@ -107,7 +106,6 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
 
     setIsUpdating(true);
     setUpdateError(null);
-    // setUpdateResults([]);
     setProgress({ done: 0, total: selectedGroups.size });
 
     // 差分判定
@@ -128,13 +126,6 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
 
     // スキップ分を即時成功扱い
     if (skippedGroupIds.length > 0) {
-      // setUpdateResults((prev) => [
-      //   ...prev,
-      //   ...skippedGroupIds.map<UpdateResult>((groupId) => ({
-      //     groupId,
-      //     success: true,
-      //   })),
-      // ]);
       setProgress((p) => (p ? { ...p, done: p.done + skippedGroupIds.length } : p));
     }
 
@@ -156,7 +147,6 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
       });
 
       const results = await limitedParallel(tasks, MAX_CONCURRENCY);
-      // setUpdateResults((prev) => [...prev, ...results]);
 
       const hasRateLimit = results.some((r) => !r.success && r.reason === "RATE_LIMIT");
 
@@ -180,6 +170,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     }
   };
 
+  // 公開状態のテキストを取得
   const getVisibilityLabel = (visibility: GroupVisibility): string => {
     const labels: Record<GroupVisibility, string> = {
       visible: "公開",
@@ -189,6 +180,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     return labels[visibility];
   };
 
+  // 公開状態のクラス属性を取得
   const getVisibilityColor = (visibility: GroupVisibility): string => {
     const colors: Record<GroupVisibility, string> = {
       visible: "bg-green-100 text-green-800",
@@ -202,10 +194,42 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     group.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // const failed = updateResults.filter(
-  //   (r): r is Extract<UpdateResult, { success: false }> => !r.success,
-  // );
-  // const successCount = updateResults.filter((r) => r.success).length;
+  const handleRepresent = async (groupId: string) => {
+    const previousGroups = groups;
+    const target = groups.find((g) => g.groupId === groupId);
+    if (!target) return;
+
+    // 次の状態を決定
+    const willBeTrue = !target.isRepresenting;
+
+    // ① 楽観的更新
+    setGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        isRepresenting: willBeTrue && g.groupId === groupId,
+      })),
+    );
+
+    setIsRepresenting(true);
+
+    try {
+      await vrcApi.updateGroupRepresentation(groupId, willBeTrue);
+      toast.success("このグループの掲示設定を更新しました。");
+    } catch (e) {
+      console.error(e);
+      toast.error("更新に失敗しました。状態を戻します。");
+
+      // ② 失敗時ロールバック
+      setGroups(previousGroups);
+    } finally {
+      setIsRepresenting(false);
+    }
+  };
+
+  const handleRepresentMode = () => {
+    setIsRepresentMode(!isRepresentMode);
+    setSelectedGroups(new Set());
+  };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-gray-50">
@@ -273,8 +297,17 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
               <SelectItem value="hidden">非公開</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleUpdate} disabled={selectedGroups.size === 0 || isUpdating}>
+          <Button
+            onClick={handleUpdate}
+            disabled={selectedGroups.size === 0 || isUpdating || isRepresentMode}
+          >
             {isUpdating ? "更新中..." : `一括更新 (${selectedGroups.size})`}
+          </Button>
+          <Button
+            onClick={handleRepresentMode}
+            disabled={isRepresenting || selectedGroups.size !== 0}
+          >
+            {isRepresentMode ? "掲示モード解除" : "掲示モード"}
           </Button>
         </div>
 
@@ -301,16 +334,23 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
         <div className="p-4">
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             {/* ヘッダー */}
-            <div className="grid grid-cols-[50px_1fr_150px] gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-sm">
-              <div className="flex items-center">
-                <Checkbox
-                  checked={selectedGroups.size === groups.length && groups.length > 0}
-                  onCheckedChange={handleSelectAll}
-                  disabled={isUpdating}
-                />
-              </div>
+            <div
+              className={`grid ${
+                isRepresentMode ? "grid-cols-[1fr_150px_80px]" : "grid-cols-[50px_1fr_150px_80px]"
+              } gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-sm`}
+            >
+              {!isRepresentMode && (
+                <div className="flex items-center">
+                  <Checkbox
+                    checked={selectedGroups.size === groups.length && groups.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    disabled={isUpdating}
+                  />
+                </div>
+              )}
               <div>グループ名</div>
               <div>公開状態</div>
+              <div>掲示状態</div>
             </div>
 
             {/* グループリスト */}
@@ -318,20 +358,35 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
               {filteredGroups.map((group) => (
                 <div
                   key={group.groupId}
-                  className="grid grid-cols-[50px_1fr_150px] gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() =>
-                    handleSelectGroup(group.groupId, !selectedGroups.has(group.groupId))
+                  className={`grid ${
+                    isRepresentMode
+                      ? "grid-cols-[1fr_150px_80px]"
+                      : "grid-cols-[50px_1fr_150px_80px]"
+                  } gap-4 p-4 transition-colors ${
+                    isRepresenting
+                      ? "opacity-50 pointer-events-none"
+                      : "hover:bg-gray-50 cursor-pointer"
+                  }`}
+                  onClick={
+                    isRepresenting
+                      ? undefined
+                      : () =>
+                          isRepresentMode
+                            ? handleRepresent(group.groupId)
+                            : handleSelectGroup(group.groupId, !selectedGroups.has(group.groupId))
                   }
                 >
-                  <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedGroups.has(group.groupId)}
-                      onCheckedChange={(checked) =>
-                        handleSelectGroup(group.groupId, checked as boolean)
-                      }
-                      disabled={isUpdating}
-                    />
-                  </div>
+                  {!isRepresentMode && (
+                    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedGroups.has(group.groupId)}
+                        onCheckedChange={(checked) =>
+                          handleSelectGroup(group.groupId, checked as boolean)
+                        }
+                        disabled={isUpdating}
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center gap-3">
                     {group.iconUrl && (
                       <img
@@ -356,6 +411,13 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
                     >
                       {getVisibilityLabel(group.memberVisibility)}
                     </Badge>
+                  </div>
+                  <div className="flex items-center">
+                    {group.isRepresenting && (
+                      <Badge className="bg-green-100 text-green-800" variant="secondary">
+                        掲示中
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}

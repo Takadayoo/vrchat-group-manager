@@ -14,6 +14,7 @@ export interface VRChatGroup {
   memberVisibility: GroupVisibility;
   memberCount?: number;
   createdAt?: string;
+  isRepresenting: boolean;
 }
 
 /**
