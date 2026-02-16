@@ -16,70 +16,37 @@ import {
 } from "@/app/components/ui/select";
 import { Separator } from "@/app/components/ui/separator";
 import { Switch } from "@/app/components/ui/switch";
-import type { AppSettings, UserInfo } from "@/types";
+import type { UserInfo } from "@/types";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { Activity, Bell, Code, FileText, Info, LogOut, Palette, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
 
 interface SettingsPageProps {
   currentUser: UserInfo;
   onLogout: () => void;
+  theme: string;
+  onThemeChange: (theme: "light" | "dark" | "system") => void;
 }
 
 const APP_VERSION = "0.2.3";
 const DEVELOPER_NAME = "takadayoo_1203";
 
-export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
-  const [settings, setSettings] = useState<AppSettings>({
-    notifications: {
-      enabled: true,
-      groupUpdates: true,
-    },
-    ui: {
-      theme: "system",
-      language: "ja",
-    },
-    logs: {
-      enabled: true,
-      level: "info",
-    },
-  });
+export const SettingsPage = ({
+  currentUser,
+  onLogout,
+  theme,
+  onThemeChange,
+}: SettingsPageProps) => {
+  // stateではなく定数で十分
+  const dummySettings = {
+    notifications: { enabled: true, groupUpdates: true },
+    ui: { language: "ja" },
+    logs: { enabled: true, level: "info" },
+  };
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      // TODO: Tauriのinvokeコマンドで設定を取得
-      // const response = await invoke<TauriResponse<AppSettings>>('get_settings');
-      // if (response.success && response.data) {
-      //   setSettings(response.data);
-      // }
-    } catch (error) {
-      console.error("Failed to load settings:", error);
-    }
-  };
-
-  const saveSettings = async (newSettings: AppSettings) => {
-    try {
-      // TODO: Tauriのinvokeコマンドで設定を保存
-      // const response = await invoke<TauriResponse<void>>('update_settings', { settings: newSettings });
-      // if (response.success) {
-      setSettings(newSettings);
-      toast.success("設定を保存しました");
-      // } else {
-      //   toast.error('設定の保存に失敗しました');
-      // }
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-      toast.error("設定の保存中にエラーが発生しました");
-    }
-  };
 
   const handleCheckUpdate = async () => {
     setIsCheckingUpdate(true);
@@ -138,7 +105,7 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
   };
 
   return (
-    <div className="flex-1 h-full overflow-auto bg-gray-50">
+    <div className="flex-1 h-full overflow-auto bg-muted">
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div>
           <h2 className="text-2xl font-semibold mb-1">設定</h2>
@@ -166,12 +133,7 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
         </Card>
 
         {/* UI表示設定 */}
-        <Card className="relative opacity-60 pointer-events-none">
-          <div className="absolute top-4 right-4 z-10">
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-              近日実装予定
-            </Badge>
-          </div>
+        <Card className="relative">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette className="size-5" />
@@ -188,17 +150,8 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
                 </p>
               </div>
               <Select
-                value={settings.ui.theme}
-                onValueChange={(value) => {
-                  const newSettings = {
-                    ...settings,
-                    ui: {
-                      ...settings.ui,
-                      theme: value as "light" | "dark" | "system",
-                    },
-                  };
-                  saveSettings(newSettings);
-                }}
+                value={theme}
+                onValueChange={(value) => onThemeChange(value as "light" | "dark" | "system")}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -219,14 +172,9 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
                 <p className="text-sm text-muted-foreground">表示言語を選択</p>
               </div>
               <Select
-                value={settings.ui.language}
-                onValueChange={(value) => {
-                  const newSettings = {
-                    ...settings,
-                    ui: { ...settings.ui, language: value as "ja" | "en" },
-                  };
-                  saveSettings(newSettings);
-                }}
+                value={dummySettings.ui.language}
+                disabled
+                // onValueChange={}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -261,17 +209,8 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
                 <p className="text-sm text-muted-foreground">デスクトップ通知を表示</p>
               </div>
               <Switch
-                checked={settings.notifications.enabled}
-                onCheckedChange={(checked) => {
-                  const newSettings = {
-                    ...settings,
-                    notifications: {
-                      ...settings.notifications,
-                      enabled: checked,
-                    },
-                  };
-                  saveSettings(newSettings);
-                }}
+                checked={dummySettings.notifications.enabled}
+                // onCheckedChange={}
               />
             </div>
 
@@ -283,18 +222,9 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
                 <p className="text-sm text-muted-foreground">グループの変更時に通知</p>
               </div>
               <Switch
-                checked={settings.notifications.groupUpdates}
-                onCheckedChange={(checked) => {
-                  const newSettings = {
-                    ...settings,
-                    notifications: {
-                      ...settings.notifications,
-                      groupUpdates: checked,
-                    },
-                  };
-                  saveSettings(newSettings);
-                }}
-                disabled={!settings.notifications.enabled}
+                checked={dummySettings.notifications.groupUpdates}
+                // onCheckedChange={}
+                disabled={!dummySettings.notifications.enabled}
               />
             </div>
           </CardContent>
@@ -321,14 +251,8 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
                 <p className="text-sm text-muted-foreground">アプリケーションログを記録</p>
               </div>
               <Switch
-                checked={settings.logs.enabled}
-                onCheckedChange={(checked) => {
-                  const newSettings = {
-                    ...settings,
-                    logs: { ...settings.logs, enabled: checked },
-                  };
-                  saveSettings(newSettings);
-                }}
+                checked={dummySettings.logs.enabled}
+                // onCheckedChange={}
               />
             </div>
 
@@ -340,18 +264,9 @@ export const SettingsPage = ({ currentUser, onLogout }: SettingsPageProps) => {
                 <p className="text-sm text-muted-foreground">記録する詳細レベル</p>
               </div>
               <Select
-                value={settings.logs.level}
-                onValueChange={(value) => {
-                  const newSettings = {
-                    ...settings,
-                    logs: {
-                      ...settings.logs,
-                      level: value as "info" | "debug" | "error",
-                    },
-                  };
-                  saveSettings(newSettings);
-                }}
-                disabled={!settings.logs.enabled}
+                value={dummySettings.logs.level}
+                // onValueChange={}
+                disabled={!dummySettings.logs.enabled}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue />

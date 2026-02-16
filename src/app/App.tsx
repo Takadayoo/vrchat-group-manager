@@ -3,14 +3,16 @@ import { Toaster } from "@/app/components/ui/sonner";
 import { GroupsPage } from "@/app/pages/GroupsPage";
 import { LoginPage } from "@/app/pages/LoginPage";
 import { SettingsPage } from "@/app/pages/SettingsPage";
-import type { UserInfo } from "@/types";
+import { useTheme } from "@/hooks/useTheme";
 import { vrcApi } from "@/lib/vrcApi";
+import type { UserInfo } from "@/types";
 import { useEffect, useState } from "react";
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [currentView, setCurrentView] = useState<SidebarView>("groups");
   const [isLoading, setIsLoading] = useState(true);
+  const { theme, setTheme } = useTheme();
 
   // 起動時に保存されたトークンを確認
   useEffect(() => {
@@ -54,7 +56,7 @@ const App = () => {
   // ローディング中
   if (isLoading) {
     return (
-      <div className="size-full flex items-center justify-center bg-gray-100">
+      <div className="size-full flex items-center justify-center bg-muted">
         <div className="text-center">
           <div className="size-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">読み込み中...</p>
@@ -81,7 +83,12 @@ const App = () => {
       <main className="flex-1 overflow-auto">
         {currentView === "groups" && <GroupsPage currentUser={currentUser} />}
         {currentView === "settings" && (
-          <SettingsPage currentUser={currentUser} onLogout={handleLogout} />
+          <SettingsPage
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            theme={theme}
+            onThemeChange={setTheme}
+          />
         )}
       </main>
 

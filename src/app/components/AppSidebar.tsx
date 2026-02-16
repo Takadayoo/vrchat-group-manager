@@ -15,8 +15,8 @@ export const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200">
+    <aside className="w-64 bg-card border-r border-border flex flex-col">
+      <div className="p-4 border-b border-border">
         <h1 className="font-semibold text-lg">VRChat グループ</h1>
       </div>
 
@@ -31,7 +31,7 @@ export const AppSidebar = ({ currentView, onViewChange }: AppSidebarProps) => {
               onClick={() => onViewChange(item.id)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100",
+                isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-accent",
               )}
             >
               <Icon className="size-5" />

@@ -185,7 +185,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     const colors: Record<GroupVisibility, string> = {
       visible: "bg-green-100 text-green-800",
       friends: "bg-blue-100 text-blue-800",
-      hidden: "bg-gray-100 text-gray-800",
+      hidden: "bg-muted text-foreground",
     };
     return colors[visibility];
   };
@@ -232,9 +232,9 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gray-50">
+    <div className="flex-1 flex flex-col h-full bg-muted">
       {/* ヘッダー */}
-      <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+      <div className="bg-card border-b border-border p-4 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-semibold">グループ管理</h2>
@@ -332,12 +332,12 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
       {/* グループリスト */}
       <div className="flex-1 overflow-auto">
         <div className="p-4">
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
             {/* ヘッダー */}
             <div
               className={`grid ${
                 isRepresentMode ? "grid-cols-[1fr_150px_80px]" : "grid-cols-[50px_1fr_150px_80px]"
-              } gap-4 p-4 bg-gray-50 border-b border-gray-200 font-medium text-sm`}
+              } gap-4 p-4 bg-background border-b border-border font-medium text-sm`}
             >
               {!isRepresentMode && (
                 <div className="flex items-center">
@@ -354,7 +354,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
             </div>
 
             {/* グループリスト */}
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-border">
               {filteredGroups.map((group) => (
                 <div
                   key={group.groupId}
@@ -365,7 +365,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
                   } gap-4 p-4 transition-colors ${
                     isRepresenting
                       ? "opacity-50 pointer-events-none"
-                      : "hover:bg-gray-50 cursor-pointer"
+                      : "hover:bg-muted/70 cursor-pointer"
                   }`}
                   onClick={
                     isRepresenting
@@ -392,7 +392,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
                       <img
                         src={group.iconUrl}
                         alt=""
-                        className="size-10 rounded-full bg-gray-100 flex-shrink-0"
+                        className="size-10 rounded-full bg-muted flex-shrink-0"
                       />
                     )}
                     <div className="min-w-0">
