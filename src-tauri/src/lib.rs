@@ -3,6 +3,7 @@ use tauri::AppHandle;
 use tauri_plugin_updater::UpdaterExt;
 
 mod error;
+mod settings_store;
 mod token_store;
 mod vrc_api;
 
@@ -66,6 +67,8 @@ pub fn run() {
             check_for_updates,
             get_represented_group,
             update_group_representation,
+            get_settings,
+            save_settings_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -183,5 +186,20 @@ async fn update_group_representation(
 
     vrc_api::update_group_representation(&token, &group_id, &is_representing).await?;
 
+    Ok(())
+}
+
+#[tauri::command]
+fn get_settings(app: AppHandle) -> std::result::Result<settings_store::AppSettings, String> {
+    let settings = settings_store::load_settings(&app)?;
+    Ok(settings)
+}
+
+#[tauri::command]
+fn save_settings_cmd(
+    app: AppHandle,
+    settings: settings_store::AppSettings,
+) -> std::result::Result<(), String> {
+    settings_store::save_settings(&app, &settings)?;
     Ok(())
 }
