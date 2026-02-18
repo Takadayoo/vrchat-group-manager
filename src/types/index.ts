@@ -7,13 +7,12 @@ export type GroupVisibility = "visible" | "friends" | "hidden";
  * VRChat グループ情報
  */
 export interface VRChatGroup {
-  groupId: string;
   name: string;
-  iconUrl?: string;
   description?: string;
-  memberVisibility: GroupVisibility;
+  iconUrl?: string;
   memberCount?: number;
-  createdAt?: string;
+  groupId: string;
+  memberVisibility: GroupVisibility;
   isRepresenting: boolean;
 }
 
@@ -31,7 +30,7 @@ export interface PaginationInfo {
  */
 export interface GroupFilter {
   searchQuery: string;
-  sortBy: "name" | "createdAt" | "memberCount";
+  sortBy: "name" | "memberCount";
   sortOrder: "asc" | "desc";
 }
 

@@ -20,7 +20,7 @@ import type {
   UserInfo,
   VRChatGroup,
 } from "@/types";
-import { RefreshCw, Search } from "lucide-react";
+import { ArrowDownNarrowWide, ArrowUpNarrowWide, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -190,9 +190,25 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     return colors[visibility];
   };
 
-  const filteredGroups = groups.filter((group) =>
-    group.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredGroups = groups
+    .filter((group) => group.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      let comparison = 0;
+
+      switch (filter.sortBy) {
+        case "name":
+          if (a.name < b.name) comparison = -1;
+          else if (a.name > b.name) comparison = 1;
+          else comparison = 0;
+          break;
+
+        case "memberCount":
+          comparison = (a.memberCount ?? 0) - (b.memberCount ?? 0);
+          break;
+      }
+
+      return filter.sortOrder === "asc" ? comparison : -comparison;
+    });
 
   const handleRepresent = async (groupId: string) => {
     const previousGroups = groups;
@@ -202,7 +218,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
     // 次の状態を決定
     const willBeTrue = !target.isRepresenting;
 
-    // ① 楽観的更新
+    // 楽観的更新
     setGroups((prev) =>
       prev.map((g) => ({
         ...g,
@@ -219,7 +235,7 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
       console.error(e);
       toast.error("更新に失敗しました。状態を戻します。");
 
-      // ② 失敗時ロールバック
+      // 失敗時ロールバック
       setGroups(previousGroups);
     } finally {
       setIsRepresenting(false);
@@ -255,13 +271,25 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
         <div className="flex gap-3 mb-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="グループ名で検索..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-              disabled={isUpdating}
-            />
+            <div className="relative">
+              <Input
+                placeholder="グループ名で検索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-8"
+                disabled={isUpdating}
+              />
+
+              {searchQuery && !isUpdating && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
           <Select
             value={filter.sortBy}
@@ -275,10 +303,26 @@ export const GroupsPage = ({ currentUser }: GroupsPageProps) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="name">名前順</SelectItem>
-              <SelectItem value="createdAt">作成日順</SelectItem>
               <SelectItem value="memberCount">メンバー数順</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() =>
+              setFilter((prev) => ({
+                ...prev,
+                sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
+              }))
+            }
+            disabled={isUpdating}
+          >
+            {filter.sortOrder === "asc" ? (
+              <ArrowUpNarrowWide className="size-4" />
+            ) : (
+              <ArrowDownNarrowWide className="size-4" />
+            )}
+          </Button>
         </div>
 
         {/* 一括更新 */}

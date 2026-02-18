@@ -37,19 +37,16 @@ pub struct VRCUser {
 /// VRChatグループ情報
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VRCGroup {
-    #[serde(rename = "groupId")]
-    pub group_id: String,
     pub name: String,
-    #[serde(rename = "memberVisibility")]
-    pub member_visibility: GroupMemberVisibility,
-    #[serde(rename = "iconId")]
-    pub icon_id: Option<String>,
-    #[serde(default)]
+    pub description: String,
+    #[serde(rename = "iconUrl")]
     pub icon_url: Option<String>,
     #[serde(rename = "memberCount")]
     pub member_count: Option<i32>,
-    #[serde(rename = "createdAt")]
-    pub created_at: Option<String>,
+    #[serde(rename = "groupId")]
+    pub group_id: String,
+    #[serde(rename = "memberVisibility")]
+    pub member_visibility: GroupMemberVisibility,
     #[serde(rename = "isRepresenting")]
     pub is_representing: Option<bool>,
 }
