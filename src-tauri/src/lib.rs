@@ -22,15 +22,14 @@ pub struct UserResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GroupResponse {
-    pub group_id: String,
     pub name: String,
+    pub description: String,
     pub member_visibility: String, // "visible", "friends", "hidden"
     #[serde(skip_serializing_if = "Option::is_none")]
     pub icon_url: Option<String>,
+    pub group_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub member_count: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub created_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_representing: Option<bool>,
 }
@@ -152,16 +151,16 @@ fn delete_token() -> std::result::Result<(), String> {
 /// VRCGroupをGroupResponseに変換
 fn group_to_response(group: vrc_api::VRCGroup) -> GroupResponse {
     GroupResponse {
-        group_id: group.group_id,
         name: group.name,
+        description: group.description,
+        icon_url: group.icon_url,
+        member_count: group.member_count,
+        group_id: group.group_id,
         member_visibility: match group.member_visibility {
             vrc_api::GroupMemberVisibility::Visible => "visible".to_string(),
             vrc_api::GroupMemberVisibility::Friends => "friends".to_string(),
             vrc_api::GroupMemberVisibility::Hidden => "hidden".to_string(),
         },
-        icon_url: group.icon_url,
-        member_count: group.member_count,
-        created_at: group.created_at,
         is_representing: group.is_representing,
     }
 }
