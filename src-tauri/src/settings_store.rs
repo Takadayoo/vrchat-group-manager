@@ -10,6 +10,8 @@ use tauri::Manager;
 pub struct AppSettings {
     #[serde(default)]
     pub ui: UiSettings,
+    #[serde(default)]
+    pub update: UpdateSettings,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -25,6 +27,22 @@ impl Default for UiSettings {
         Self {
             theme: "system".to_string(),
             language: "ja".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateSettings {
+    pub check_on_startup: bool,
+    pub include_prerelease: bool,
+}
+
+impl Default for UpdateSettings {
+    fn default() -> Self {
+        Self {
+            check_on_startup: true,
+            include_prerelease: false,
         }
     }
 }
