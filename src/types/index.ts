@@ -48,20 +48,28 @@ export interface UserInfo {
  * アプリケーション設定
  */
 export interface AppSettings {
-  notifications: {
-    enabled: boolean;
-    groupUpdates: boolean;
-  };
-  ui: {
-    theme: "light" | "dark" | "system";
-    language: "ja" | "en";
-  };
-  logs: {
-    enabled: boolean;
-    level: "info" | "debug" | "error";
-  };
+  notifications: notificationSettings;
+  ui: UiSettings;
+  logs: LogSettings;
+  update: UpdateSettings;
 }
 
+interface notificationSettings {
+  enabled: boolean;
+  groupUpdates: boolean;
+}
+interface UiSettings {
+  theme: "light" | "dark" | "system";
+  language: "ja" | "en";
+}
+interface LogSettings {
+  enabled: boolean;
+  level: "info" | "debug" | "error";
+}
+interface UpdateSettings {
+  checkOnStartup: boolean;
+  includePrerelease: boolean;
+}
 /**
  * Tauri コマンドのレスポンス型
  */

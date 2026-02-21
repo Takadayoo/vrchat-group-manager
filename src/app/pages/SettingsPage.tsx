@@ -1,3 +1,13 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import {
   Card,
@@ -16,11 +26,10 @@ import {
 } from "@/app/components/ui/select";
 import { Separator } from "@/app/components/ui/separator";
 import { Switch } from "@/app/components/ui/switch";
+import { vrcApi } from "@/lib/vrcApi";
 import type { UserInfo } from "@/types";
-import { relaunch } from "@tauri-apps/plugin-process";
-import { check } from "@tauri-apps/plugin-updater";
 import { Activity, Bell, Code, FileText, Info, LogOut, Palette, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
 
@@ -29,6 +38,8 @@ interface SettingsPageProps {
   onLogout: () => void;
   theme: string;
   onThemeChange: (theme: "light" | "dark" | "system") => void;
+  checkForUpdate: () => Promise<void>;
+  isChecking: boolean;
 }
 
 const APP_VERSION = "0.2.3";
@@ -39,59 +50,24 @@ export const SettingsPage = ({
   onLogout,
   theme,
   onThemeChange,
+  checkForUpdate,
+  isChecking,
 }: SettingsPageProps) => {
+  const [updateSettings, setUpdateSettings] = useState({
+    checkOnStartup: true,
+    includePrerelease: false,
+  });
+  const [dialogType, setDialogType] = useState<"disableCheck" | "enablePrerelease" | null>(null);
+
   // stateではなく定数で十分
   const dummySettings = {
     notifications: { enabled: true, groupUpdates: true },
     ui: { language: "ja" },
     logs: { enabled: true, level: "info" },
   };
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   const handleCheckUpdate = async () => {
-    setIsCheckingUpdate(true);
-    try {
-      const update = await check();
-
-      if (update) {
-        toast.success(`新しいバージョン ${update.version} が利用可能です`, {
-          description: update.body || "アップデート内容をご確認ください",
-          duration: 15000,
-          action: {
-            label: "今すぐ更新",
-            onClick: async () => {
-              try {
-                toast.info("アップデートをダウンロード中...");
-
-                await update.downloadAndInstall();
-
-                toast.success("アップデート完了！アプリを再起動します");
-
-                setTimeout(async () => {
-                  await relaunch();
-                }, 1000);
-              } catch (error) {
-                console.error("Update installation error:", error);
-                toast.error("アップデートのインストールに失敗しました");
-              }
-            },
-          },
-          cancel: {
-            label: "後で",
-            onClick: () => {
-              toast.dismiss();
-            },
-          },
-        });
-      } else {
-        toast.info("最新バージョンを使用しています");
-      }
-    } catch (error) {
-      console.error("Update check error:", error);
-      toast.error("アップデート確認中にエラーが発生しました");
-    } finally {
-      setIsCheckingUpdate(false);
-    }
+    await checkForUpdate();
   };
 
   const handleLogout = async () => {
@@ -103,6 +79,43 @@ export const SettingsPage = ({
       toast.error("ログアウト中にエラーが発生しました");
     }
   };
+
+  // 「起動時確認」をOFFにする時だけダイアログを出す
+  const handleCheckOnStartupChange = (checked: boolean) => {
+    if (!checked) {
+      setDialogType("disableCheck");
+    } else {
+      saveUpdateSettings({ ...updateSettings, checkOnStartup: true });
+    }
+  };
+
+  // 「プレリリース」をONにする時だけダイアログを出す
+  const handleIncludePrereleaseChange = (checked: boolean) => {
+    if (checked) {
+      setDialogType("enablePrerelease");
+    } else {
+      saveUpdateSettings({ ...updateSettings, includePrerelease: false });
+    }
+  };
+
+  const saveUpdateSettings = async (next: typeof updateSettings) => {
+    const current = await vrcApi.getSettings();
+    try {
+      await vrcApi.saveSettings({ ...current, update: next });
+      setUpdateSettings(next);
+    } catch (error) {
+      console.error(error);
+      toast.error("設定の保存に失敗しました");
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      const settings = await vrcApi.getSettings();
+      setUpdateSettings(settings.update);
+    };
+    load();
+  }, []);
 
   return (
     <div className="flex-1 h-full overflow-auto bg-muted">
@@ -290,16 +303,46 @@ export const SettingsPage = ({
             </CardTitle>
             <CardDescription>アプリケーションの更新を管理します</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>アップデート確認</Label>
                 <p className="text-sm text-muted-foreground">新しいバージョンを確認</p>
               </div>
-              <Button variant="outline" onClick={handleCheckUpdate} disabled={isCheckingUpdate}>
-                <RefreshCw className={`size-4 mr-2 ${isCheckingUpdate ? "animate-spin" : ""}`} />
-                {isCheckingUpdate ? "確認中..." : "確認"}
+              <Button variant="outline" onClick={handleCheckUpdate} disabled={isChecking}>
+                <RefreshCw className={`size-4 mr-2 ${isChecking ? "animate-spin" : ""}`} />
+                {isChecking ? "確認中..." : "確認"}
               </Button>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>起動時にアップデートを確認する</Label>
+                <p className="text-sm text-muted-foreground">
+                  アプリ起動時に自動で新バージョンを確認します
+                </p>
+              </div>
+              <Switch
+                checked={updateSettings.checkOnStartup}
+                onCheckedChange={handleCheckOnStartupChange}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>プレリリース版を受け取る</Label>
+                <p className="text-sm text-muted-foreground">
+                  開発中の新機能をいち早く試せます（不安定な場合があります）
+                </p>
+              </div>
+              <Switch
+                checked={updateSettings.includePrerelease}
+                onCheckedChange={handleIncludePrereleaseChange}
+              />
             </div>
           </CardContent>
         </Card>
@@ -318,6 +361,11 @@ export const SettingsPage = ({
               <Code className="size-4 text-muted-foreground" />
               <span className="text-muted-foreground">バージョン:</span>
               <span className="font-mono">{APP_VERSION}</span>
+              {updateSettings.includePrerelease && (
+                <Badge variant="secondary" className="text-xs text-yellow-700 bg-yellow-100">
+                  ※プレリリース利用中
+                </Badge>
+              )}
             </div>
 
             <Separator />
@@ -344,6 +392,39 @@ export const SettingsPage = ({
           </CardContent>
         </Card>
       </div>
+      <AlertDialog open={dialogType !== null} onOpenChange={(open) => !open && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {dialogType === "disableCheck"
+                ? "アップデート通知を無効にしますか？"
+                : "プレリリース版を受け取りますか？"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialogType === "disableCheck"
+                ? "アップデート通知を無効にすると、新機能や不具合修正、セキュリティ更新のお知らせを受け取れなくなります。重要な修正を見逃す可能性がありますが、よろしいですか？"
+                : "プレリリース版には、新機能をいち早く試せるメリットがありますが、予期しない不具合が含まれる場合があります。有効にしますか？"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {dialogType === "disableCheck" ? "有効のままにする（推奨）" : "キャンセル"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (dialogType === "disableCheck") {
+                  saveUpdateSettings({ ...updateSettings, checkOnStartup: false });
+                } else {
+                  saveUpdateSettings({ ...updateSettings, includePrerelease: true });
+                }
+                setDialogType(null);
+              }}
+            >
+              {dialogType === "disableCheck" ? "無効にする" : "有効にする"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
