@@ -3,6 +3,7 @@ import { Toaster } from "@/app/components/ui/sonner";
 import { GroupsPage } from "@/app/pages/GroupsPage";
 import { LoginPage } from "@/app/pages/LoginPage";
 import { SettingsPage } from "@/app/pages/SettingsPage";
+import { useAutoUpdate } from "@/hooks/useAutoUpdate";
 import { useTheme } from "@/hooks/useTheme";
 import { vrcApi } from "@/lib/vrcApi";
 import type { UserInfo } from "@/types";
@@ -13,6 +14,7 @@ const App = () => {
   const [currentView, setCurrentView] = useState<SidebarView>("groups");
   const [isLoading, setIsLoading] = useState(true);
   const { theme, setTheme } = useTheme();
+  const { checkForUpdate, isChecking } = useAutoUpdate(!!currentUser && !isLoading);
 
   // 起動時に保存されたトークンを確認
   useEffect(() => {
@@ -88,6 +90,8 @@ const App = () => {
             onLogout={handleLogout}
             theme={theme}
             onThemeChange={setTheme}
+            checkForUpdate={checkForUpdate}
+            isChecking={isChecking}
           />
         )}
       </main>
