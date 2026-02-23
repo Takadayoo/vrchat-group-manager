@@ -1,6 +1,5 @@
 import { vrcApi } from "@/lib/vrcApi";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { check } from "@tauri-apps/plugin-updater";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,7 +9,7 @@ export const useAutoUpdate = (enabled = false) => {
   const checkForUpdate = async (silent = false) => {
     setIsChecking(true);
     try {
-      const update = await check();
+      const update = await vrcApi.checkForUpdates();
 
       if (update) {
         toast.success(`新しいバージョン ${update.version} が利用可能です`, {
@@ -22,7 +21,7 @@ export const useAutoUpdate = (enabled = false) => {
               try {
                 toast.info("アップデートをダウンロード中...");
 
-                await update.downloadAndInstall();
+                await vrcApi.installUpdate();
 
                 toast.success("アップデート完了！アプリを再起動します");
 

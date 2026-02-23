@@ -89,4 +89,18 @@ export const vrcApi = {
   async saveSettings(settings: AppSettings): Promise<void> {
     await invoke("save_settings_cmd", { settings });
   },
+
+  /**
+   * アップデートを確認する
+   */
+  async checkForUpdates(): Promise<{ version: string; body?: string } | null> {
+    return await invoke<{ version: string; body?: string } | null>("check_for_updates");
+  },
+
+  /**
+   * アップデートをダウンロードしてインストール
+   */
+  async installUpdate(): Promise<void> {
+    await invoke("install_update");
+  },
 };
