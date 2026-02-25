@@ -1,0 +1,37 @@
+name: Version Check
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  version-check:
+    name: Version Consistency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: バージョン一致チェック
+        shell: bash
+        run: |
+          PKG=$(jq -r '.version' package.json)
+          CARGO=$(grep '^version' src-tauri/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TAURI=$(jq -r '.version' src-tauri/tauri.conf.json)
+
+          echo "package.json    : $PKG"
+          echo "Cargo.toml      : $CARGO"
+          echo "tauri.conf.json : $TAURI"
+
+          if [ "$PKG" != "$CARGO" ] || [ "$PKG" != "$TAURI" ]; then
+            echo ""
+            echo "❌ バージョンが一致していません"
+            echo "リリース前に3ファイルのバージョンを揃えてください"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ バージョンが一致しています: $PKG"

@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.jsのセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Rust stableのインストール
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rustキャッシュ
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: フロントエンド依存関係のインストール
+        run: npm install
+
+      - name: プレリリース判定
+        id: check_prerelease
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_name }}" == *"-"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: ビルドとリリース
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "VRChat Group Manager ${{ github.ref_name }}"
+          releaseDraft: false
+          prerelease: ${{ steps.check_prerelease.outputs.is_prerelease }}
+
+      - name: プレリリース固定タグの更新
+        if: steps.check_prerelease.outputs.is_prerelease == 'true'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete pre-release --yes --cleanup-tag || true
+          gh release download "${{ github.ref_name }}" \
+            --pattern "latest.json" \
+            --dir "${{ runner.temp }}/release-assets"
+          gh release create pre-release \
+            --prerelease \
+            --title "Pre-release（最新）" \
+            --notes "このリリースは常に最新のプレリリース版を指します" \
+            "${{ runner.temp }}/release-assets/latest.json"

@@ -28,6 +28,7 @@ import { Separator } from "@/app/components/ui/separator";
 import { Switch } from "@/app/components/ui/switch";
 import { vrcApi } from "@/lib/vrcApi";
 import type { UserInfo } from "@/types";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { Activity, Bell, Code, FileText, Info, LogOut, Palette, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ export const SettingsPage = ({
     includePrerelease: false,
   });
   const [dialogType, setDialogType] = useState<"disableCheck" | "enablePrerelease" | null>(null);
+  const [needsRestart, setNeedsRestart] = useState(false);
 
   // stateではなく定数で十分
   const dummySettings = {
@@ -102,6 +104,9 @@ export const SettingsPage = ({
     const current = await vrcApi.getSettings();
     try {
       await vrcApi.saveSettings({ ...current, update: next });
+      if (next.includePrerelease !== updateSettings.includePrerelease) {
+        setNeedsRestart(true);
+      }
       setUpdateSettings(next);
     } catch (error) {
       console.error(error);
@@ -344,6 +349,21 @@ export const SettingsPage = ({
                 onCheckedChange={handleIncludePrereleaseChange}
               />
             </div>
+
+            {needsRestart && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-950 rounded-md border border-yellow-200 dark:border-yellow-800">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    設定変更を適用するには再起動が必要です
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => relaunch()}>
+                    <RefreshCw className="size-4 mr-2" />
+                    今すぐ再起動
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
