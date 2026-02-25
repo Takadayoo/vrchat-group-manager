@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
-use tauri_plugin_updater::UpdaterExt;
 
 mod error;
 mod settings_store;
 mod token_store;
+mod update_handler;
 mod vrc_api;
 
 /// ユーザー情報レスポンス
@@ -64,6 +64,7 @@ pub fn run() {
             load_token,
             delete_token,
             check_for_updates,
+            install_update,
             get_represented_group,
             update_group_representation,
             get_settings,
@@ -118,13 +119,16 @@ async fn update_group_status(
     Ok(())
 }
 
+/// アップデートを確認する
 #[tauri::command]
-async fn check_for_updates(app: AppHandle) -> Result<bool, String> {
-    let updater = app.updater().map_err(|e| e.to_string())?;
+async fn check_for_updates(app: AppHandle) -> Result<Option<update_handler::UpdateInfo>, String> {
+    update_handler::check(&app).await
+}
 
-    let update = updater.check().await.map_err(|e| e.to_string())?;
-
-    Ok(update.is_some())
+/// アップデートをダウンロードしてインストール
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    update_handler::install(&app).await
 }
 
 /// トークンを保存
