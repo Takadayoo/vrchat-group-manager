@@ -1,4 +1,3 @@
-import "@/styles/ui/sonner.css";
 import type { ToasterProps } from "sonner";
 import { Toaster as Sonner } from "sonner";
 

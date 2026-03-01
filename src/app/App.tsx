@@ -4,55 +4,25 @@ import { GroupsPage } from "@/app/pages/GroupsPage";
 import { LoginPage } from "@/app/pages/LoginPage";
 import { SettingsPage } from "@/app/pages/SettingsPage";
 import { useAutoUpdate } from "@/hooks/useAutoUpdate";
+import { useSession } from "@/hooks/useSession";
 import { useTheme } from "@/hooks/useTheme";
-import { vrcApi } from "@/lib/vrcApi";
 import type { UserInfo } from "@/types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const App = () => {
-  const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
+  const { currentUser, isLoading, login, logout } = useSession();
   const [currentView, setCurrentView] = useState<SidebarView>("groups");
-  const [isLoading, setIsLoading] = useState(true);
   const { theme, setTheme } = useTheme();
   const { checkForUpdate, isChecking } = useAutoUpdate(!!currentUser && !isLoading);
 
-  // 起動時に保存されたトークンを確認
-  useEffect(() => {
-    checkExistingSession();
-  }, []);
-
-  const checkExistingSession = async () => {
-    try {
-      // 保存されたトークンを確認
-      const token = await vrcApi.loadToken();
-      if (token) {
-        // トークンが存在する場合、ユーザー情報を取得
-        const user = await vrcApi.loginWithToken(token);
-        setCurrentUser(user);
-      }
-    } catch (error) {
-      console.error("Failed to check session:", error);
-      // トークンが無効な場合は削除
-      await vrcApi.deleteToken();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleLoginSuccess = (user: UserInfo) => {
-    setCurrentUser(user);
+    login(user);
     setCurrentView("groups");
   };
 
   const handleLogout = async () => {
-    try {
-      // トークンを削除
-      await vrcApi.deleteToken();
-      setCurrentUser(null);
-      setCurrentView("groups");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    await logout();
+    setCurrentView("groups");
   };
 
   // ローディング中
