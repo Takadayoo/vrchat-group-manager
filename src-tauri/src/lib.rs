@@ -1,45 +1,10 @@
-use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
-
+mod commands;
 mod error;
+mod models;
 mod settings_store;
 mod token_store;
 mod update_handler;
 mod vrc_api;
-
-/// ユーザー情報レスポンス
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct UserResponse {
-    pub id: String,
-    pub username: String,
-    pub display_name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub avatar_url: Option<String>,
-}
-
-/// グループ情報レスポンス
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct GroupResponse {
-    pub name: String,
-    pub description: String,
-    pub member_visibility: String, // "visible", "friends", "hidden"
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub icon_url: Option<String>,
-    pub group_id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub member_count: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub is_representing: Option<bool>,
-}
-
-/// ログインレスポンス
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LoginResponse {
-    pub user: UserResponse,
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -57,152 +22,19 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            login_with_token,
-            get_my_groups,
-            update_group_status,
-            save_token,
-            load_token,
-            delete_token,
-            check_for_updates,
-            install_update,
-            get_represented_group,
-            update_group_representation,
-            get_settings,
-            save_settings_cmd,
+            commands::auth::login_with_token,
+            commands::auth::save_token,
+            commands::auth::load_token,
+            commands::auth::delete_token,
+            commands::groups::get_my_groups,
+            commands::groups::update_group_status,
+            commands::groups::get_represented_group,
+            commands::groups::update_group_representation,
+            commands::settings::get_settings,
+            commands::settings::save_settings_cmd,
+            commands::update::check_for_updates,
+            commands::update::install_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-/// トークンでログイン
-#[tauri::command]
-async fn login_with_token(token: String) -> std::result::Result<LoginResponse, String> {
-    // トークンを保存
-    token_store::save_token(&token)?;
-
-    // ユーザー情報を取得
-    let user = vrc_api::get_my_user(&token).await?;
-
-    Ok(LoginResponse {
-        user: UserResponse {
-            id: user.id,
-            username: user.username.unwrap_or_default(),
-            display_name: user.display_name,
-            avatar_url: user.avatar_url,
-        },
-    })
-}
-
-/// グループ一覧取得
-#[tauri::command]
-async fn get_my_groups(
-    token: String,
-    user_id: String,
-) -> std::result::Result<Vec<GroupResponse>, String> {
-    let groups = vrc_api::get_my_groups(&token, &user_id).await?;
-
-    Ok(groups.into_iter().map(group_to_response).collect())
-}
-
-/// グループの可視状態を更新
-#[tauri::command]
-async fn update_group_status(
-    group_id: String,
-    visibility: String,
-) -> std::result::Result<(), String> {
-    let token = token_store::load_token()?.ok_or("Token not found")?;
-    let user = vrc_api::get_my_user(&token).await?;
-
-    let vis = vrc_api::parse_visibility(&visibility)?;
-    vrc_api::update_group_visibility(&token, &user.id, &group_id, vis).await?;
-
-    Ok(())
-}
-
-/// アップデートを確認する
-#[tauri::command]
-async fn check_for_updates(app: AppHandle) -> Result<Option<update_handler::UpdateInfo>, String> {
-    update_handler::check(&app).await
-}
-
-/// アップデートをダウンロードしてインストール
-#[tauri::command]
-async fn install_update(app: AppHandle) -> Result<(), String> {
-    update_handler::install(&app).await
-}
-
-/// トークンを保存
-#[tauri::command]
-fn save_token(token: String) -> std::result::Result<(), String> {
-    token_store::save_token(&token)?;
-    Ok(())
-}
-
-/// トークンを読み込み
-#[tauri::command]
-fn load_token() -> std::result::Result<Option<String>, String> {
-    let token = token_store::load_token()?;
-    Ok(token)
-}
-
-/// トークンを削除
-#[tauri::command]
-fn delete_token() -> std::result::Result<(), String> {
-    token_store::delete_token()?;
-    Ok(())
-}
-
-/// VRCGroupをGroupResponseに変換
-fn group_to_response(group: vrc_api::VRCGroup) -> GroupResponse {
-    GroupResponse {
-        name: group.name,
-        description: group.description,
-        icon_url: group.icon_url,
-        member_count: group.member_count,
-        group_id: group.group_id,
-        member_visibility: match group.member_visibility {
-            vrc_api::GroupMemberVisibility::Visible => "visible".to_string(),
-            vrc_api::GroupMemberVisibility::Friends => "friends".to_string(),
-            vrc_api::GroupMemberVisibility::Hidden => "hidden".to_string(),
-        },
-        is_representing: group.is_representing,
-    }
-}
-
-/// 掲示中のグループを取得する
-#[tauri::command]
-async fn get_represented_group() -> std::result::Result<Vec<GroupResponse>, String> {
-    let token = token_store::load_token()?.ok_or("Token not found")?;
-    let user = vrc_api::get_my_user(&token).await?;
-    let groups = vrc_api::get_represented_group(&token, &user.id).await?;
-
-    Ok(groups.into_iter().map(group_to_response).collect())
-}
-
-/// 指定したグループを掲示する(掲示中の場合を掲示停止する)
-#[tauri::command]
-async fn update_group_representation(
-    group_id: String,
-    is_representing: bool,
-) -> std::result::Result<(), String> {
-    let token = token_store::load_token()?.ok_or("Token not found")?;
-
-    vrc_api::update_group_representation(&token, &group_id, &is_representing).await?;
-
-    Ok(())
-}
-
-#[tauri::command]
-fn get_settings(app: AppHandle) -> std::result::Result<settings_store::AppSettings, String> {
-    let settings = settings_store::load_settings(&app)?;
-    Ok(settings)
-}
-
-#[tauri::command]
-fn save_settings_cmd(
-    app: AppHandle,
-    settings: settings_store::AppSettings,
-) -> std::result::Result<(), String> {
-    settings_store::save_settings(&app, &settings)?;
-    Ok(())
 }

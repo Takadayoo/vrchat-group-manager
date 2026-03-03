@@ -51,11 +51,12 @@ export const vrcApi = {
   /**
    * グループの可視状態を更新
    */
-  async updateGroupVisibility(groupId: string, visibility: GroupVisibility): Promise<void> {
-    await invoke("update_group_status", {
-      groupId,
-      visibility,
-    });
+  async updateGroupVisibility(
+    userId: string,
+    groupId: string,
+    visibility: GroupVisibility,
+  ): Promise<void> {
+    await invoke("update_group_status", { userId, groupId, visibility });
   },
 
   /**

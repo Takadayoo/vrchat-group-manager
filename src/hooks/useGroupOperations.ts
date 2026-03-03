@@ -77,7 +77,7 @@ export const useGroupOperations = (userId: string) => {
     try {
       const tasks = targetGroupIds.map((groupId) => async (): Promise<UpdateResult> => {
         try {
-          await vrcApi.updateGroupVisibility(groupId, targetVisibility);
+          await vrcApi.updateGroupVisibility(userId, groupId, targetVisibility);
           return { groupId, success: true };
         } catch (e) {
           return {

@@ -1,55 +1,7 @@
+use crate::models::{GroupMemberVisibility, VRCGroup, VRCUser};
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE, USER_AGENT};
-use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::error::{AppError, Result};
-
-/// グループメンバーの可視状態
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum GroupMemberVisibility {
-    Visible,
-    Friends,
-    Hidden,
-}
-
-impl fmt::Display for GroupMemberVisibility {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Visible => write!(f, "visible"),
-            Self::Friends => write!(f, "friends"),
-            Self::Hidden => write!(f, "hidden"),
-        }
-    }
-}
-
-/// VRChatユーザー情報
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VRCUser {
-    pub id: String,
-    pub username: Option<String>,
-    #[serde(rename = "displayName")]
-    pub display_name: String,
-    #[serde(rename = "profilePicOverride")]
-    pub avatar_url: Option<String>,
-}
-
-/// VRChatグループ情報
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VRCGroup {
-    pub name: String,
-    pub description: String,
-    #[serde(rename = "iconUrl")]
-    pub icon_url: Option<String>,
-    #[serde(rename = "memberCount")]
-    pub member_count: Option<i32>,
-    #[serde(rename = "groupId")]
-    pub group_id: String,
-    #[serde(rename = "memberVisibility")]
-    pub member_visibility: GroupMemberVisibility,
-    #[serde(rename = "isRepresenting")]
-    pub is_representing: Option<bool>,
-}
 
 const USER_AGENT_STR: &str = "VRC Group Manager/0.2.3 discord:takadayoo_1203";
 const BASE_URL: &str = "https://api.vrchat.cloud/api/1";
